@@ -1,4 +1,7 @@
 
+Ref: https://github.com/googlesamples/android-MediaRecorder
+此项目是引用google demo 做的修改。实现录制视频的简单功能。
+
 Android MediaRecorder Sample
 ===================================
 
