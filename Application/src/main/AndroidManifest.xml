@@ -49,6 +49,7 @@
             </intent-filter>
         </activity>
         <service android:name="com.example.android.service.RecorderService" />
+        <service android:name="com.example.android.service.AudioRecorderService" />
     </application>
 
 </manifest>

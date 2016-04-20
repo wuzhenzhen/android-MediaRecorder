@@ -34,7 +34,7 @@ public class CameraHelper {
 
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int MEDIA_TYPE_VIDEO = 2;
-
+    public static final int MEDIA_TYPE_AUDIO = 3;
     /**
      * Iterate over supported camera preview sizes to see which one best fits the
      * dimensions of the given view while maintaining the aspect ratio. If none can,
@@ -172,11 +172,15 @@ public class CameraHelper {
         } else if(type == MEDIA_TYPE_VIDEO) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
                     "VID_"+ timeStamp + ".mp4");
+        } else if (type == MEDIA_TYPE_AUDIO) {
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "AMR_"+ timeStamp + ".amr");
         } else {
             return null;
         }
 
         return mediaFile;
     }
+
 
 }

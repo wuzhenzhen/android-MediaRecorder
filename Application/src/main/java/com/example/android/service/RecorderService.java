@@ -21,7 +21,6 @@ import java.util.List;
 
 public class RecorderService extends Service {
 	private static final String TAG = "RecorderService";
-	private static Camera mServiceCamera;
 	private static Camera mCamera;
 	private boolean isRecording;
 	private MediaRecorder mMediaRecorder;
@@ -181,6 +180,11 @@ public class RecorderService extends Service {
 			long current = System.currentTimeMillis();
 			long endCurrent = current + 10*1000;
 			while (current < endCurrent) {
+				try {
+					sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				current = System.currentTimeMillis();
 			}
 			mHandler.sendEmptyMessage(1);

@@ -20,5 +20,7 @@
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="btnCapture">capture</string>
-    <string name="runingBack">后台录制</string>
+    <string name="runingBack">background</string>
+    <string name="btn_audioRecord">audio</string>
+    <string name="cb_runningBackAudioRecord">background</string>
 </resources>

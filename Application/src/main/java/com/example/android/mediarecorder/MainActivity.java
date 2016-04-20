@@ -36,6 +36,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
 import com.example.android.common.media.CameraHelper;
+import com.example.android.service.AudioRecorderService;
 import com.example.android.service.RecorderService;
 
 import java.io.IOException;
@@ -57,6 +58,7 @@ public class MainActivity extends Activity {
     private static final String TAG = "Recorder";
     private Button captureButton;
 
+    private Button btn_audio;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +75,8 @@ public class MainActivity extends Activity {
 
             }
         });
+
+        btn_audio = (Button) findViewById(R.id.btn_audio);
     }
 
     /**
@@ -157,8 +161,8 @@ public class MainActivity extends Activity {
     private boolean prepareVideoRecorder(){
 
         // BEGIN_INCLUDE (configure_preview)
-        mCamera = CameraHelper.getDefaultCameraInstance();
-//        mCamera = CameraHelper.getDefaultFrontFacingCameraInstance();
+        mCamera = CameraHelper.getDefaultCameraInstance();//
+//        mCamera = CameraHelper.getDefaultFrontFacingCameraInstance();//前置摄像头
         mCamera.setDisplayOrientation(90);
         // We need to make sure that our preview and recording video size are supported by the
         // camera. Query camera to find all the sizes and choose the optimal size given the
@@ -172,20 +176,30 @@ public class MainActivity extends Activity {
                 width, heigt);
 //        Camera.Size optimalSize = mSupportedPreviewSizes.get(1);
 //        List<int []> fps = parameters.getSupportedPreviewFpsRange();
-        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);//focusMode, 此处不能少，否则捕获video不清晰
+        //focusMode, 此处不能少，否则捕获video不清晰; 但是用前置摄像头时setFouceMode 会crash
+        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
         // Use the same size for recording profile.
         CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
         profile.videoFrameWidth = optimalSize.width;
         profile.videoFrameHeight = optimalSize.height;
         profile.fileFormat = 1;
-        profile.quality = CamcorderProfile.QUALITY_1080P;
+        profile.quality = CamcorderProfile.QUALITY_HIGH;
         profile.videoCodec = 1;
 //        profile.videoFrameRate = 14;
 
 
         // likewise for the camera object itself.
         parameters.setPreviewSize(profile.videoFrameWidth, profile.videoFrameHeight);
-        mCamera.setParameters(parameters);
+        try {
+            mCamera.setParameters(parameters);
+        } catch (IllegalStateException e){
+            Log.e(TAG, "Camera.setParameters fail :" + e.getMessage());
+            return false;
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Camera.setParameters fail :" + e.getMessage());
+            return false;
+        }
+
         try {
                 // Requires API level 11+, For backward compatibility use {@link setPreviewDisplay}
                 // with {@link SurfaceView}
@@ -264,5 +278,77 @@ public class MainActivity extends Activity {
 
         }
     }
+//===============================Audio  录音==============================================
+    public void onCaptureAudio(View view) {
+        if(isRecording) {
+            stopRecording();
+            isRecording = false;
+            btn_audio.setText("start");
+            captureButton.setEnabled(true);
+        } else {
+            isRecording = true;
+            if (cb_runingback.isChecked()) {
+                Intent audioRecorderServiceIntent = new Intent (getApplicationContext(), AudioRecorderService.class);
+                getApplicationContext().startService(audioRecorderServiceIntent);
+                this.finish();
+                return;
+            }
+            new MediaAudioPrepareTask().execute(null,null,null);
+            captureButton.setEnabled(false);
+        }
+    }
 
+    private boolean prepareAudioRecorder(){
+        mMediaRecorder = new MediaRecorder();
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mMediaRecorder.setOutputFile(CameraHelper.getOutputMediaFile(3).toString());
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            mMediaRecorder.prepare();
+        } catch (IOException e) {
+            Log.e("prepareAudioRecorder", "prepareAudioRecorder() failed");
+            return false;
+        }
+//        mMediaRecorder.start();
+        return true;
+    }
+
+    private void stopRecording() {
+        if (mMediaRecorder != null) {
+            mMediaRecorder.stop();
+//        mMediaRecorder.reset();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+        }
+    }
+
+    /**
+     * Asynchronous task for preparing the {@link android.media.MediaRecorder} since it's a long blocking
+     * operation.
+     */
+    class MediaAudioPrepareTask extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            // initialize video camera
+            if (prepareAudioRecorder()) {
+                // Camera is available and unlocked, MediaRecorder is prepared,
+                // now you can start recording
+                mMediaRecorder.start();
+                isRecording = true;
+            } else {
+                // prepare didn't work, release the mediarecorder
+                stopRecording();
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            btn_audio.setText("stop");
+        }
+    }
 }
