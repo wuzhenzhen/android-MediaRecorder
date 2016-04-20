@@ -18,6 +18,7 @@ package com.example.android.mediarecorder;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
@@ -31,8 +32,11 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 
 import com.example.android.common.media.CameraHelper;
+import com.example.android.service.RecorderService;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,6 +50,7 @@ public class MainActivity extends Activity {
 
     private Camera mCamera;
     private TextureView mPreview;
+    private CheckBox cb_runingback;
     private MediaRecorder mMediaRecorder;
 
     private boolean isRecording = false;
@@ -61,6 +66,13 @@ public class MainActivity extends Activity {
 
         mPreview = (TextureView) findViewById(R.id.surface_view);
         captureButton = (Button) findViewById(R.id.button_capture);
+        cb_runingback = (CheckBox) findViewById(R.id.cb_runingback);
+        cb_runingback.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+            }
+        });
     }
 
     /**
@@ -72,6 +84,7 @@ public class MainActivity extends Activity {
      */
     public void onCaptureClick(View view) {
         if (isRecording) {
+
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//clear keep_screen_on
             // BEGIN_INCLUDE(stop_release_media_recorder)
 
@@ -87,6 +100,12 @@ public class MainActivity extends Activity {
             // END_INCLUDE(stop_release_media_recorder)
 
         } else {
+            if(cb_runingback.isChecked()) {
+                Intent recorderServiceIntent = new Intent(this, RecorderService.class);
+                startService(recorderServiceIntent);
+                this.finish();
+                return;
+            }
             //keep the device's screen turned on and bright  when capture video
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -139,6 +158,7 @@ public class MainActivity extends Activity {
 
         // BEGIN_INCLUDE (configure_preview)
         mCamera = CameraHelper.getDefaultCameraInstance();
+//        mCamera = CameraHelper.getDefaultFrontFacingCameraInstance();
         mCamera.setDisplayOrientation(90);
         // We need to make sure that our preview and recording video size are supported by the
         // camera. Query camera to find all the sizes and choose the optimal size given the
